@@ -39,11 +39,9 @@ jobs:
           CIBW_BEFORE_BUILD_LINUX: |
             dnf install -y epel-release
             dnf config-manager --enable epel
-            dnf install -y gcc-gfortran lapack-devel hdf5-devel openmpi-devel netcdf-fortran-devel
-            pip install numpy matplotlib scipy sympy mpi4py
+            dnf install -y gcc-gfortran lapack-devel hdf5-devel openmpi-devel netcdf-fortran-devel python3-devel
           CIBW_BEFORE_BUILD_MACOS: |
-            brew install gcc hdf5 open-mpi netcdf
-            pip install numpy matplotlib scipy sympy mpi4py
+            brew install gcc hdf5 open-mpi netcdf-fortran
           CIBW_ENVIRONMENT_LINUX: >
             SKBUILD_CMAKE_ARGS="-DBUILD_SHARED_LIBS=ON;-DENABLE_HDF5=ON;-DENABLE_FORTRAN=OFF;-DENABLE_TESTING=OFF"
           CIBW_ENVIRONMENT_MACOS: >
