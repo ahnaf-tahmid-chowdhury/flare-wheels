@@ -1,4 +1,3 @@
 [submodule "flare"]
 	path = flare
 	url = https://gitlab.com/ahnaf-tahmid-chowdhury/flare.git
-	branch = proxima
