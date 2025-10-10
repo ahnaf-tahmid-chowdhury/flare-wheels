@@ -1,0 +1,84 @@
+name: Build and Publish wheels to PyPI
+
+on:
+  # allows running workflows manually
+  workflow_dispatch:
+
+  release:
+    types: [published]
+
+jobs:
+  build-wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: manylinux_x86_64
+          - os: macos-13
+            arch: macosx_x86_64
+          - os: macos-14
+            arch: macosx_arm64
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          submodules: recursive
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v3.2.0
+        env:
+          CIBW_BUILD: "cp*-${{ matrix.arch }}"
+          CIBW_ARCHS_LINUX: "x86_64"
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_34
+          CIBW_ARCHS_MACOS: "native"
+          CIBW_BEFORE_BUILD_LINUX: |
+            dnf install -y epel-release
+            dnf config-manager --enable epel
+            dnf install -y gcc-gfortran lapack-devel hdf5-devel openmpi-devel netcdf-fortran-devel
+            pip install numpy matplotlib scipy sympy mpi4py
+          CIBW_BEFORE_BUILD_MACOS: |
+            brew install gcc hdf5 open-mpi netcdf
+            pip install numpy matplotlib scipy sympy mpi4py
+          CIBW_ENVIRONMENT_LINUX: >
+            SKBUILD_CMAKE_ARGS="-DBUILD_SHARED_LIBS=ON;-DENABLE_HDF5=ON;-DENABLE_FORTRAN=OFF;-DENABLE_TESTING=OFF"
+          CIBW_ENVIRONMENT_MACOS: >
+            MACOSX_DEPLOYMENT_TARGET=${{ matrix.os == 'macos-14' && '14.0' || '13.0' }}
+            SKBUILD_CMAKE_ARGS="-DBUILD_SHARED_LIBS=ON;-DENABLE_HDF5=ON;-DENABLE_TESTING=OFF"
+            DYLD_LIBRARY_PATH=/usr/local/opt/gcc/lib/gcc/current/:$DYLD_LIBRARY_PATH
+            FC=gfortran-14
+            HDF5_ROOT=$(brew --prefix hdf5)
+          CIBW_BUILD_FRONTEND: "build"
+          CIBW_TEST_REQUIRES: "pytest"
+          CIBW_TEST_COMMAND: "cd {project}/flare/tests && pytest -ra"
+        with:
+          package-dir: flare
+          output-dir: wheelhouse
+          config-file: "{package}/pyproject.toml"
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v4
+        with:
+          name: flare-wheels-${{ matrix.os }}
+          path: ./wheelhouse/*.whl
+
+  pypi-publish:
+    name: Publish wheels to PyPI
+    if: github.event_name == 'release'
+    needs: [build-wheels]
+    runs-on: ubuntu-latest
+    environment:
+        name: pypi
+    permissions:
+        id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist/
+          merge-multiple: true
+
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
