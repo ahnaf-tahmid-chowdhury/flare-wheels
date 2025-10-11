@@ -39,17 +39,13 @@ jobs:
           CIBW_BEFORE_BUILD_LINUX: |
             dnf install -y epel-release
             dnf config-manager --enable epel
-            dnf install -y gcc-gfortran lapack-devel hdf5-devel openmpi-devel netcdf-fortran-devel python3-devel
+            dnf install -y gcc-gfortran lapack-devel hdf5-devel openmpi-devel netcdf-fortran-devel
           CIBW_BEFORE_BUILD_MACOS: |
             brew install gcc hdf5 open-mpi netcdf-fortran
-          CIBW_ENVIRONMENT_LINUX: >
-            SKBUILD_CMAKE_ARGS="-DBUILD_SHARED_LIBS=ON;-DENABLE_HDF5=ON;-DENABLE_FORTRAN=OFF;-DENABLE_TESTING=OFF"
           CIBW_ENVIRONMENT_MACOS: >
             MACOSX_DEPLOYMENT_TARGET=${{ matrix.os == 'macos-14' && '14.0' || '13.0' }}
-            SKBUILD_CMAKE_ARGS="-DBUILD_SHARED_LIBS=ON;-DENABLE_HDF5=ON;-DENABLE_TESTING=OFF"
             DYLD_LIBRARY_PATH=/usr/local/opt/gcc/lib/gcc/current/:$DYLD_LIBRARY_PATH
             FC=gfortran-14
-            HDF5_ROOT=$(brew --prefix hdf5)
           CIBW_BUILD_FRONTEND: "build"
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "cd {project}/flare/tests && pytest -ra"
