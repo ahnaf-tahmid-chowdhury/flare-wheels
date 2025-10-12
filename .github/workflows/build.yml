@@ -18,10 +18,6 @@ jobs:
         include:
           - os: ubuntu-latest
             arch: manylinux_x86_64
-          - os: macos-13
-            arch: macosx_x86_64
-          - os: macos-14
-            arch: macosx_arm64
 
     steps:
       - name: Checkout repository
@@ -42,13 +38,9 @@ jobs:
             dnf install -y gcc-gfortran lapack-devel hdf5-devel openmpi-devel netcdf-fortran-devel
             pip install git+https://gitlab.com/ahnaf-tahmid-chowdhury/moose@scikit-build-core
             cp $(moose-config --lib)/libMOOSE.so /usr/local/lib
-          CIBW_BEFORE_BUILD_MACOS: |
-            brew install gcc hdf5 open-mpi netcdf-fortran
-          CIBW_ENVIRONMENT_MACOS: >
-            MACOSX_DEPLOYMENT_TARGET=${{ matrix.os == 'macos-14' && '14.0' || '13.0' }}
-            DYLD_LIBRARY_PATH=/usr/local/opt/gcc/lib/gcc/current/:$DYLD_LIBRARY_PATH
-            FC=gfortran-14
           CIBW_BUILD_FRONTEND: "build"
+          CIBW_REPAIR_WHEEL_COMMAND_LINUX: |
+            auditwheel repair -w {dest_dir} {wheel} --exclude libfusionio_fusionio.so --exclude libfusionio_m3dc1.so
           CIBW_TEST_REQUIRES: "pytest"
           CIBW_TEST_COMMAND: "cd {project}/flare/tests && pytest -ra"
         with:
