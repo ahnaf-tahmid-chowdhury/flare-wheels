@@ -41,7 +41,7 @@ jobs:
             dnf config-manager --enable epel
             dnf install -y gcc-gfortran lapack-devel hdf5-devel openmpi-devel netcdf-fortran-devel
             pip install git+https://gitlab.com/ahnaf-tahmid-chowdhury/moose@scikit-build-core
-            cp $(moose-config --lib)/libMOOSE.so /usr/local/lib64
+            cp $(moose-config --lib)/libMOOSE.so /usr/local/lib
           CIBW_BEFORE_BUILD_MACOS: |
             brew install gcc hdf5 open-mpi netcdf-fortran
           CIBW_ENVIRONMENT_MACOS: >
